@@ -1,11 +1,12 @@
 // Code to read and set any environment variables with the dotenv package
-require("dotenv").config();
+require('dotenv').config();
 
 // Importing files needed to run the funtions
 var fs = require("fs");
 var keys = require('./keys.js');
 var request = require('request');
 var twitter = require('twitter');
+var inquirer = require("inquirer");
 
 //Variables to target specific APIs in the keys.js file
 // var spotify = new spotify(keys.spotify);
@@ -18,20 +19,22 @@ var liriCommand = process.argv[2];
 
 switch (liriCommand) {
     case "my-tweets":
-    tweets();
+    getTweets();
     break;
 
     case "spotify-this-song":
-    song();
+    getSong();
     break;
 
     case "movie-this":
-    movie();
+    getMovie();
     break;
 
     case "do-what-it-says":
-    random();
+    getRandom();
     break;
+    default:
+      console.log("No valid argument has been provided, please try again");
 }
 
 //========================================================================
@@ -39,33 +42,41 @@ switch (liriCommand) {
 // FUNCTION FOR EACH LIRI COMMAND
 
 // Function for Twitter
-function tweets() {
+function getTweets() {
     var client = new twitter(keys.twitter);
     var twitterUserName = process.argv[3];
 
-    var params = {screen_name: twitterUserName};
-    client.get('statuses/user_timeline', params, function(error, data, response) {
+    var params = {screen_name: twitterUserName, count: 20};
+    client.get('statuses/user_timeline', params, function(error, tweets, response) {
         if (error) {
             console.log(error);
         }
         else {
-
-        console.log(twitterUserName + " latest tweets are: " + data);
+            for (var i = 0; i < tweets.length; i++) {
+                console.log("Tweet: " + tweets[i].text + "\nCreated: " + tweets[i].created_at);
+            }
         }
     })
 };
 
 //Function for Spotify
-function song() {
+function getSong() {
 
 };
 
 //Function for movies
-function movie() {
+function getMovie() {
     // Store all of the arguments in an array
-    var movieName = process.argv[3];
+    var nodeArgs = process.argv;
+    var movieName = "";
+    //If no movie name is provided, use Mr.Nobody as default
         if (!movieName) {
-            movieName = "mr nobody";
+            var defaultMovie = "mr nobody";
+        }
+
+        //Loop to run node arguments for movies that have more than one word
+        for (var i =3; i <nodeArgs.length; i++) {
+            movieName = movieName + "+" + nodeArgs[i];
         }
 
     // Then run a request to the OMDB API with the movie specified
@@ -81,7 +92,7 @@ function movie() {
             var movieObject = JSON.parse(body);
             //console.log(movieObject); // Show the text in the terminal
             var movieResults = 
-            "------------------------------ begin ------------------------------" + "\r\n"
+            "------------------------------ begin ------------------------------" + "\r\n" +
             "Title: " + movieObject.Title+"\r\n"+
             "Year: " + movieObject.Year+"\r\n"+
             "Imdb Rating: " + movieObject.imdbRating+"\r\n"+
@@ -101,6 +112,6 @@ function movie() {
 };
 
 //Function for Random
-function random(){
+function getRandom(){
 
 };
