@@ -6,10 +6,10 @@ var fs = require("fs");
 var keys = require('./keys.js');
 var request = require('request');
 var twitter = require('twitter');
+var Spotify = require('node-spotify-api');
 var inquirer = require("inquirer");
 
 //Variables to target specific APIs in the keys.js file
-// var spotify = new spotify(keys.spotify);
 
 var liriCommand = process.argv[2];
 //======================================================================
@@ -60,8 +60,29 @@ function getTweets() {
 };
 
 //Function for Spotify
-function getSong() {
+function getSong(songName) {
+    var spotify = new Spotify(keys.spotify);
 
+    //Store all of the arguments in an array
+    var nodeArgs = process.argv;
+    var songName= "";
+    var defaultSong = "The Sign by Ace of Base";
+    //If no song is provided, use The Sign" 
+        if (!songName) {
+            songName = defaultSong;
+        }
+        //Loop to run node arguments for songs that have more than one word
+        for (var i =3; i <nodeArgs.length; i++) {
+                songName = songName + "+" + nodeArgs[i];
+        }
+
+        spotify.search({ type: 'track', query: songName }, function(err, data) {
+            if (err) {
+                return console.log('Error occurred: ' + err);
+            } 
+            console.log("Artist: " + data.tracks.items[i].artists.name + "\nSong name: " + data.tracks.items[i].name +
+            "\nAlbum Name: " + data.tracks.items[i].album.name + "\nPreview Link: " + data.tracks.items[i].preview_url); 
+        });
 };
 
 //Function for movies
@@ -69,9 +90,10 @@ function getMovie() {
     // Store all of the arguments in an array
     var nodeArgs = process.argv;
     var movieName = "";
+    var defaultMovie = "mr nobody";
     //If no movie name is provided, use Mr.Nobody as default
         if (!movieName) {
-            var defaultMovie = "mr nobody";
+            movieName = defaultMovie;
         }
 
         //Loop to run node arguments for movies that have more than one word
