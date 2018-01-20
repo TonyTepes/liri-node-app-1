@@ -7,7 +7,6 @@ var keys = require('./keys.js');
 var request = require('request');
 var twitter = require('twitter');
 var Spotify = require('node-spotify-api');
-var inquirer = require("inquirer");
 
 //Variables to target specific APIs in the keys.js file
 
@@ -16,7 +15,6 @@ var liriCommand = process.argv[2];
 
 // Available commands for liri 
 //my-tweets, spotify-this-song, movie-this, do-what-it-says
-
 switch (liriCommand) {
     case "my-tweets":
     getTweets();
@@ -33,10 +31,11 @@ switch (liriCommand) {
     case "do-what-it-says":
     getRandom();
     break;
-    default:
-      console.log("No valid argument has been provided, please try again");
-}
 
+    //If no command is entered, this is the default message to user
+    default:
+      console.log("No valid argument has been provided, please enter one of the following commands: 'my-tweets', 'spotify-this-song', 'movie-this', 'do-what-it-says' followed by parameter.");
+}
 //========================================================================
 
 // FUNCTION FOR EACH LIRI COMMAND
@@ -46,6 +45,7 @@ function getTweets() {
     var client = new twitter(keys.twitter);
     var twitterUserName = process.argv[3];
 
+    //Callback for twitter to search 20 latest tweets for a specific twitter user
     var params = {screen_name: twitterUserName, count: 20};
     client.get('statuses/user_timeline', params, function(error, tweets, response) {
         if (error) {
@@ -54,6 +54,17 @@ function getTweets() {
         else {
             for (var i = 0; i < tweets.length; i++) {
                 console.log("Tweet: " + tweets[i].text + "\nCreated: " + tweets[i].created_at);
+
+                //Creates variable to log tweets into log.txt file
+                var logTweets = twitterUserName + "\nTweet: " + tweets[i].created_at + "\nTweet Text: " + tweets[i].text + "\n-------\n";
+
+                //Appends txt to log.txt file
+                fs.appendFile('log.txt', logTweets, function (err) {
+                    if (err) throw err;
+                });
+
+                console.log('Saved!');
+
             }
         }
     })
@@ -66,52 +77,66 @@ function getSong(songName) {
     //Store all of the arguments in an array
     var nodeArgs = process.argv;
     var songName= "";
-    var defaultSong = "The Sign by Ace of Base";
-    //If no song is provided, use The Sign" 
-        if (!songName) {
-            songName = defaultSong;
-        }
-        //Loop to run node arguments for songs that have more than one word
-        for (var i =3; i <nodeArgs.length; i++) {
-                songName = songName + "+" + nodeArgs[i];
-        }
 
-        spotify.search({ type: 'track', query: songName }, function(err, data) {
+    //Loop to run node arguments for songs that have more than one word
+        for (var i =3; i <nodeArgs.length; i++) {
+                songName = songName + " " + nodeArgs[i];
+        }
+    //If no song is provided, use "The Sign" 
+            if (!songName) {
+                songName = "The Sign";
+            };        
+
+        console.log(songName);
+
+        //Callback to spotify to search for song name
+        spotify.search({ type: 'track', query: songName}, function(err, data) {
             if (err) {
                 return console.log('Error occurred: ' + err);
             } 
-            console.log("Artist: " + data.tracks.items[i].artists.name + "\nSong name: " + data.tracks.items[i].name +
+            console.log("Artist: " + data.tracks.items[i].artists[0].name + "\nSong name: " + data.tracks.items[i].name +
             "\nAlbum Name: " + data.tracks.items[i].album.name + "\nPreview Link: " + data.tracks.items[i].preview_url); 
+            
+            //Creates a variable to save text into log.txt file
+            var logSong = "Artist: " + data.tracks.items[i].artists[0].name + "\nSong name: " + data.tracks.items[i].name +
+            "\nAlbum Name: " + data.tracks.items[i].album.name + "\nPreview Link: " + data.tracks.items[i].preview_url + "\n";
+            
+            //Appends text to log.txt file
+            fs.appendFile('log.txt', logSong, function (err) {
+                if (err) throw err;
+              });
+            
+            logResults(data);
         });
 };
 
 //Function for movies
 function getMovie() {
-    // Store all of the arguments in an array
+    //Store all of the arguments in an array
     var nodeArgs = process.argv;
     var movieName = "";
-    var defaultMovie = "mr nobody";
-    //If no movie name is provided, use Mr.Nobody as default
-        if (!movieName) {
-            movieName = defaultMovie;
-        }
-
-        //Loop to run node arguments for movies that have more than one word
+    //Loop to run node arguments for movies that have more than one word
         for (var i =3; i <nodeArgs.length; i++) {
             movieName = movieName + "+" + nodeArgs[i];
+        }   
+    //If no movie name is provided, use Mr.Nobody as default
+        if (!movieName) {
+            movieName = "mr nobody";
         }
-
-    // Then run a request to the OMDB API with the movie specified
+            
+    // Runs a request to the OMDB API with the movie specified
     var queryUrl = "http://www.omdbapi.com/?t=" + movieName + "&y=&plot=short&r=json&tomatoes=true&apikey=trilogy";
 
-    // This line is just to help us debug against the actual URL.
+    // Helps debugging
     console.log(queryUrl);
 
+    //Callback to OMDB API to get movie info
     request(queryUrl, function(error, response, body) {
 
         // If the request is successful
         if (!error && response.statusCode === 200) {
             var movieObject = JSON.parse(body);
+
             //console.log(movieObject); // Show the text in the terminal
             var movieResults = 
             "------------------------------ begin ------------------------------" + "\r\n" +
@@ -125,6 +150,13 @@ function getMovie() {
             "Actors: " + movieObject.Actors+"\r\n"+
             "------------------------------ end ------------------------------" + "\r\n";
             console.log(movieResults);
+
+            //Appends movie results to log.txt file
+            fs.appendFile('log.txt', movieResults, function (err) {
+                if (err) throw err;
+              });
+              console.log("Saved!");
+              logResults(response);
         } 
         else {
 			console.log("Error :"+ error);
@@ -135,5 +167,29 @@ function getMovie() {
 
 //Function for Random
 function getRandom(){
+    //Reads text in random.txt file
+    fs.readFile("random.txt", "utf8", function(error, data) {
+        if (error) {
+            return console.log(error);
+        }
+        else {
+        console.log(data);
 
+        //creates a variable for data
+        var getRandomData = data.split(",");
+        //passes data into getSong function
+        getSong(getRandomData[1]);
+        }
+        console.log(getRandomData[1]);
+    });
 };
+
+//Function to log results from the other functions
+function logResults(data){
+    fs.appendFile("log.txt", data, function(err) {
+      if (err)
+          throw err;
+    });
+  }
+
+
