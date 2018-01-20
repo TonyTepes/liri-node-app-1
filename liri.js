@@ -11,21 +11,23 @@ var Spotify = require('node-spotify-api');
 //Variables to target specific APIs in the keys.js file
 
 var liriCommand = process.argv[2];
+var input = process.argv[3];
 //======================================================================
 
 // Available commands for liri 
 //my-tweets, spotify-this-song, movie-this, do-what-it-says
+function commands (liriCommand, input){
 switch (liriCommand) {
     case "my-tweets":
-    getTweets();
+    getTweets(input);
     break;
 
     case "spotify-this-song":
-    getSong();
+    getSong(input);
     break;
 
     case "movie-this":
-    getMovie();
+    getMovie(input);
     break;
 
     case "do-what-it-says":
@@ -35,15 +37,16 @@ switch (liriCommand) {
     //If no command is entered, this is the default message to user
     default:
       console.log("No valid argument has been provided, please enter one of the following commands: 'my-tweets', 'spotify-this-song', 'movie-this', 'do-what-it-says' followed by parameter.");
+    }
 }
 //========================================================================
 
 // FUNCTION FOR EACH LIRI COMMAND
 
 // Function for Twitter
-function getTweets() {
+function getTweets(input) {
     var client = new twitter(keys.twitter);
-    var twitterUserName = process.argv[3];
+    var twitterUserName = input;
 
     //Callback for twitter to search 20 latest tweets for a specific twitter user
     var params = {screen_name: twitterUserName, count: 20};
@@ -74,14 +77,6 @@ function getTweets() {
 function getSong(songName) {
     var spotify = new Spotify(keys.spotify);
 
-    //Store all of the arguments in an array
-    var nodeArgs = process.argv;
-    var songName= "";
-
-    //Loop to run node arguments for songs that have more than one word
-        for (var i =3; i <nodeArgs.length; i++) {
-                songName = songName + " " + nodeArgs[i];
-        }
     //If no song is provided, use "The Sign" 
         if (!songName) {
             songName = "The Sign";
@@ -94,12 +89,12 @@ function getSong(songName) {
             if (err) {
                 return console.log('Error occurred: ' + err);
             } 
-            console.log("Artist: " + data.tracks.items[i].artists[0].name + "\nSong name: " + data.tracks.items[i].name +
-            "\nAlbum Name: " + data.tracks.items[i].album.name + "\nPreview Link: " + data.tracks.items[i].preview_url); 
+            console.log("Artist: " + data.tracks.items[0].artists[0].name + "\nSong name: " + data.tracks.items[0].name +
+            "\nAlbum Name: " + data.tracks.items[0].album.name + "\nPreview Link: " + data.tracks.items[0].preview_url); 
             
             //Creates a variable to save text into log.txt file
-            var logSong = "Artist: " + data.tracks.items[i].artists[0].name + "\nSong name: " + data.tracks.items[i].name +
-            "\nAlbum Name: " + data.tracks.items[i].album.name + "\nPreview Link: " + data.tracks.items[i].preview_url + "\n";
+            var logSong = "Artist: " + data.tracks.items[0].artists[0].name + "\nSong name: " + data.tracks.items[0].name +
+            "\nAlbum Name: " + data.tracks.items[0].album.name + "\nPreview Link: " + data.tracks.items[0].preview_url + "\n";
             
             //Appends text to log.txt file
             fs.appendFile('log.txt', logSong, function (err) {
@@ -111,14 +106,7 @@ function getSong(songName) {
 };
 
 //Function for movies
-function getMovie() {
-    //Store all of the arguments in an array
-    var nodeArgs = process.argv;
-    var movieName = "";
-    //Loop to run node arguments for movies that have more than one word
-        for (var i =3; i <nodeArgs.length; i++) {
-            movieName = movieName + "+" + nodeArgs[i];
-        }   
+function getMovie(movieName) {
     //If no movie name is provided, use Mr.Nobody as default
         if (!movieName) {
             movieName = "mr nobody";
@@ -175,12 +163,12 @@ function getRandom(){
         else {
         console.log(data);
 
-        //creates a variable for data
+        //creates a variable for data in random.txt
         var randomData = data.split(",");
         //passes data into getSong function
-        getSong(randomData[1]);
+        commands(randomData[0], randomData[1]);
         }
-        console.log(randomData[1]);
+        console.log("test" + randomData[0] + randomData[1]);
     });
 };
 
@@ -190,6 +178,8 @@ function logResults(data){
       if (err)
           throw err;
     });
-  }
+  };
+
+  commands(liriCommand,input);
 
 
