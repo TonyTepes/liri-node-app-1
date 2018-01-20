@@ -83,9 +83,9 @@ function getSong(songName) {
                 songName = songName + " " + nodeArgs[i];
         }
     //If no song is provided, use "The Sign" 
-            if (!songName) {
-                songName = "The Sign";
-            };        
+        if (!songName) {
+            songName = "The Sign";
+        };        
 
         console.log(songName);
 
@@ -176,11 +176,11 @@ function getRandom(){
         console.log(data);
 
         //creates a variable for data
-        var getRandomData = data.split(",");
+        var randomData = data.split(",");
         //passes data into getSong function
-        getSong(getRandomData[1]);
+        getSong(randomData[1]);
         }
-        console.log(getRandomData[1]);
+        console.log(randomData[1]);
     });
 };
 
